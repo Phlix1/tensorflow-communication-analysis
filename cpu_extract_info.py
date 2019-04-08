@@ -2,6 +2,8 @@ from tensorflow.core.framework import graph_pb2
 from google.protobuf import text_format
 from LogRecord import *
 from LogRecordMgr import LogRecordMgr
+from CommNodeMgr import CommNodeMgr
+from CommNode import CommNode
 import re
 def logfile_processing(startline, logfile_path, log_record_mgr):
     line_count = 0
@@ -39,7 +41,7 @@ def worker_logfile_processing(worker_logfile_path, log_record_mgr):
         line = f.readline()
         while line:
             if "Register node" in line:
-                graph[graph_count%2] += "node{\n"
+                graph[graph_count%2] = "node{\n"
                 line_count += 1
                 line = f.readline()
                 while line and "library {" not in line:
@@ -61,10 +63,14 @@ def ps_logfile_processing(ps_logfile_path, log_record_mgr):
     logfile_processing(0, ps_logfile_path, log_record_mgr)
 
 # following is test
+comm_node_mgr = CommNodeMgr()
 log_record_mgr = LogRecordMgr()
-#graph_def = worker_logfile_processing("./LenetLog/lenet-logfile-worker0.txt", log_record_mgr)
+graph_def = worker_logfile_processing("./LenetLog/lenet-logfile-worker0.txt", log_record_mgr)
 ps_logfile_processing("./LenetLog/lenet-logfile-ps0.txt", log_record_mgr)
-log_record_mgr.logs_print()
+#log_record_mgr.logs_print()
+comm_node_mgr.add_from_graph(graph_def)
+comm_node_mgr.add_from_logrecord(log_record_mgr)
+comm_node_mgr.commnode_print()
 #for node in graph_def.node:
 #    print(node.name)
 
