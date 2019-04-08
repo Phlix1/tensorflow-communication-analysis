@@ -108,7 +108,7 @@ class LogRecordMgr:
             return True       
         # case 4 RecvTensorAsync req: step_id:(request)
         find_request = re.match(r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}.\d{6}):.*] RecvTensorAsync '\
-                                +'req: step_id: (\d*) rendezvous_key: "(.*)" request_id: (.*) '\
+                                +'req: step_id: (\d*) rendezvous_key: "(.*)" request_id: (.*)  '\
                                 , raw_message)
         if find_request!=None:
             timestr = find_request.group(1)
@@ -123,7 +123,7 @@ class LogRecordMgr:
         # case 5 Done call back
         find_callback = re.match(r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}.\d{6}):.*] done callback, '\
                                 +'req: step_id: (\d*) rendezvous_key: "(.*)" request_id: (.*)  '\
-                                +'response (.*) send_start_micros: (\d*) ', raw_message)
+                                +'response (.*)send_start_micros: (\d*) ', raw_message)
         if find_callback!=None:
             timestr = find_callback.group(1)
             logtype = Constants.DONECALLBACK_RECORD
@@ -144,7 +144,54 @@ class LogRecordMgr:
                                     resp_start_ts, tensor_shape)
             self.insert_log_record(donecallback_log, logtype)
             return True
+    def get_shape_by_tensorname(self, tensorname):
+        for log_record in self.donecall_log_records:
+            if tensorname==log_record.tensor_name:
+                return log_record.tensor_shape
+    def get_sendtimes_by_sendnode(self, sendnode, send_time):
+        for log_record in self.syncdone_log_records:
+            if log_record.nodename == sendnode:
+                stepid = log_record.stepid
+                send_time[stepid] = log_record.timestr
+    def get_req_resp_start_times_by_rendezvouskey(self, sendmachine, recvmachine, \
+                                                tensorname, request_time, response_starttime):
+        for log_record in self.request_log_records:
+            rendezvous_key = log_record.rendezvous_key
+            if recvmachine in rendezvous_key and sendmachine in rendezvous_key \
+                and tensorname in rendezvous_key:
+                stepid = log_record.stepid
+                requestid = log_record.request_id
+                request_time[stepid] = log_record.timestr
+                self.get_response_starttimes_by_requestid(requestid, response_starttime)
+        
+    def get_response_starttimes_by_requestid(self, requestid, response_starttime):
+        for log_record in self.donecall_log_records:
+            if requestid==log_record.request_id:
+                stepid = log_record.stepid
+                resp_start_ts = log_record.resp_start_ts
+                resp_start_str = time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(float(resp_start_ts[0:10])))
+                resp_start_str += '.'+resp_start_ts[10:]
+                response_starttime[stepid] = resp_start_str
+                break
+    
+    def get_using_time_by_consumers(self, consumers, using_time):
+        for log_record in self.process_log_records:
+            stepid = log_record.stepid
+            for consumer in consumers:
+                if log_record.nodename == consumer:
+                    if stepid not in using_time.keys():
+                        using_time[stepid] = log_record.timestr
+                    else:
+                        curtime = log_record.timestr_to_timestamp(using_time[stepid])
+                        if curtime>log_record.timestr_to_timestamp(log_record.timestr):
+                            using_time[stepid] = log_record.timestr
 
+
+    def get_response_endtimes_by_recvnode(self, recvnode, response_endtime):
+        for log_record in self.asyncdone_log_records:
+            if log_record.nodename == recvnode:
+                stepid = log_record.stepid
+                response_endtime[stepid] = log_record.timestr
     def logs_print(self):
         for log in self.runpart_log_records:
             log.log_print()
