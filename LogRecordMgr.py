@@ -1,6 +1,7 @@
 import Constants
 import re
 from LogRecord import *
+from utils import *
 class LogRecordMgr:
     def __init__(self):
         self.runpart_log_records = []
@@ -192,6 +193,24 @@ class LogRecordMgr:
             if log_record.nodename == recvnode:
                 stepid = log_record.stepid
                 response_endtime[stepid] = log_record.timestr
+    
+    def get_runtime_by_stepid(self, stepid):
+        start_ts = "2200-01-01 00:00:00.000000"
+        end_ts = "2000-01-01 00:00:00.000000"
+        logrecords = self.runpart_log_records + self.process_log_records + self.syncdone_log_records \
+                     + self.asyncdone_log_records + self.request_log_records + self.donecall_log_records
+        for logrecord in logrecords:
+            if logrecord.stepid == stepid:
+                if timestr_to_timestamp(start_ts) > timestr_to_timestamp(logrecord.timestr):
+                    start_ts = logrecord.timestr
+                if timestr_to_timestamp(end_ts) < timestr_to_timestamp(logrecord.timestr):
+                    end_ts = logrecord.timestr
+        if start_ts == "2200-01-01 00:00:00.000000" or end_ts == "2000-01-01 00:00:00.000000":
+            return False
+        else:
+            print(start_ts, end_ts)
+            return timestr_to_timestamp(end_ts)-timestr_to_timestamp(start_ts)
+
     def logs_print(self):
         for log in self.runpart_log_records:
             log.log_print()
