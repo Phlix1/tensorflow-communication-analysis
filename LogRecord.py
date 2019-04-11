@@ -17,6 +17,8 @@ class BaseLogRecord:
         print(self.timestr)
         print("Log Type: ", self.logtype)
         print("Step Id:", self.stepid)
+    def serialize_log(self):
+        return [self.raw_message, self.timestr, self.logtype, self.stepid]     
 
 
 class ProcessNodeLogRecord(BaseLogRecord):
@@ -45,10 +47,18 @@ class ProcessNodeLogRecord(BaseLogRecord):
         if self.nodetype==Constants.SEND_NODE or self.nodetype == Constants.RECV_NODE:
             print("Send Device: ", self.send_device)
             print("Recv Device: ", self.recv_device)
-            print("Tensor Name: ", self.tensor_name)    
+            print("Tensor Name: ", self.tensor_name)
+    def serialize_log(self):
+        if self.nodetype == Constants.SEND_NODE or self.nodetype == Constants.RECV_NODE:
+            return [self.raw_message, self.timestr, self.logtype, self.stepid,
+                    self.nodename, self.nodetype, self.device, self.send_device, self.recv_device,
+                    self.tensor_name]  
+        else:
+            return [self.raw_message, self.timestr, self.logtype, self.stepid,
+                    self.nodename, self.nodetype, self.device]           
 
 class RunPartitionLogRecord(BaseLogRecord):
-    def __init__(self, raw_message, timestr, logtype, stepid, execution_count):
+    def __init__(self, raw_message, timestr, logtype, stepid, execution_count):     
         BaseLogRecord.__init__(self, raw_message, timestr, logtype, stepid)
         self.execution_count = execution_count
     def log_print(self):
@@ -57,6 +67,9 @@ class RunPartitionLogRecord(BaseLogRecord):
         print("Log Type: ", self.logtype)
         print("Step Id: ", self.stepid)
         print("Execution Count: ", self.execution_count)
+    def serialize_log(self):
+        return [self.raw_message, self.timestr, self.logtype, self.stepid,
+                self.execution_count]
 
 class SyncDoneLogRecord(BaseLogRecord):
     def __init__(self, raw_message, timestr, logtype, stepid, nodename):
@@ -68,6 +81,10 @@ class SyncDoneLogRecord(BaseLogRecord):
         print("Log Type: ", self.logtype)
         print("Step Id: ", self.stepid)
         print("Node name: ", self.nodename)
+    def serialize_log(self):
+        return [self.raw_message, self.timestr, self.logtype, self.stepid,
+                self.nodename]
+
 class AsyncDoneLogRecord(BaseLogRecord):
     def __init__(self, raw_message, timestr, logtype, stepid, nodename):
         BaseLogRecord.__init__(self, raw_message, timestr, logtype, stepid)
@@ -78,6 +95,9 @@ class AsyncDoneLogRecord(BaseLogRecord):
         print("Log Type: ", self.logtype)
         print("Step Id: ", self.stepid)
         print("Node name: ", self.nodename)
+    def serialize_log(self):
+        return [self.raw_message, self.timestr, self.logtype, self.stepid,
+                self.nodename]
 
 class RequestLogRecord(BaseLogRecord):
     def __init__(self, raw_message, timestr, logtype, stepid, rendezvous_key, request_id):
@@ -91,6 +111,9 @@ class RequestLogRecord(BaseLogRecord):
         print("Step Id: ", self.stepid)
         print("Rendezvous Key: ", self.rendezvous_key)
         print("Request Id: ", self.request_id)
+    def serialize_log(self):
+        return [self.raw_message, self.timestr, self.logtype, self.stepid,
+                self.rendezvous_key, self.request_id]
 
 class DoneCallbackLogRecord(BaseLogRecord):
     def __init__(self, raw_message, timestr, logtype, stepid, rendezvous_key, request_id, \
@@ -111,7 +134,6 @@ class DoneCallbackLogRecord(BaseLogRecord):
         else:
             print("ERROR: Cannot find tensorname when init DoneCallbackLogRecord.",file=sys.stderr)
             os._exit(0)
-
     def log_print(self):
         print("============================================")
         print(self.timestr)
@@ -121,4 +143,7 @@ class DoneCallbackLogRecord(BaseLogRecord):
         print("Request Id: ", self.request_id)
         print("Response Start Timestamp: ", self.resp_start_ts)
         print("Tensor Name: ", self.tensor_name)
-        print("Tensor Shape: ", self.tensor_shape)
+        print("Tensor Shape: ", self.tensor_shape)   
+    def serialize_log(self):
+        return [self.raw_message, self.timestr, self.logtype, self.stepid,
+                self.rendezvous_key, self.request_id, self.resp_start_ts, self.tensor_shape]
