@@ -84,3 +84,26 @@ class CommNode:
             self.node_info()
             return False
         return True
+
+    def serialize_node(self):
+        serial_result = [self.nodename, self.dimnum, self.dims, self.sendnode, self.recvnode,\
+                 self.recvnode_consumers, self.tensorname, self.sendmachine, self.recvmachine,\
+                 self.send_time, self.request_time, self.response_starttime, self.response_endtime,\
+                 self.using_time]
+        return serial_result
+    
+    def deserialize_node(self, serial_result):
+        self.nodename = serial_result[0]
+        self.dimnum = serial_result[1]
+        self.dims = serial_result[2]
+        self.sendnode = serial_result[3]
+        self.recvnode = serial_result[4]
+        self.recvnode_consumers = serial_result[5]
+        self.tensorname= serial_result[6]
+        self.sendmachine = serial_result[7]
+        self.recvmachine = serial_result[8]
+        self.send_time = serial_result[9]
+        self.request_time = serial_result[10]
+        self.response_starttime = serial_result[11]
+        self.response_endtime = serial_result[12]
+        self.using_time = serial_result[13]
