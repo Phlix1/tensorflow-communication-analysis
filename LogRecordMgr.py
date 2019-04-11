@@ -2,6 +2,7 @@ import Constants
 import re
 from LogRecord import *
 from utils import *
+import pickle
 class LogRecordMgr:
     def __init__(self):
         self.runpart_log_records = []
@@ -208,7 +209,6 @@ class LogRecordMgr:
         if start_ts == "2200-01-01 00:00:00.000000" or end_ts == "2000-01-01 00:00:00.000000":
             return False
         else:
-            print(start_ts, end_ts)
             return timestr_to_timestamp(end_ts)-timestr_to_timestamp(start_ts)
 
     def logs_print(self):
@@ -224,3 +224,62 @@ class LogRecordMgr:
             log.log_print()
         for log in self.donecall_log_records:
             log.log_print()
+
+    def save_logrecords(self, save_path):
+        save_runpart = []
+        for runpart in self.runpart_log_records:
+            save_runpart.append(runpart.serialize_log())
+        save_process = []
+        for process in self.process_log_records:
+            save_process.append(process.serialize_log())
+        save_syncdone = []
+        for syncdone in self.syncdone_log_records:
+            save_syncdone.append(syncdone.serialize_log())
+        save_asyncdone = []
+        for asyncdone in self.asyncdone_log_records:
+            save_asyncdone.append(asyncdone.serialize_log())
+        save_request = []
+        for request in self.request_log_records:
+            save_request.append(request.serialize_log())
+        save_donecall = []
+        for donecall in self.donecall_log_records:
+            save_donecall.append(donecall.serialize_log())
+        save_list = [save_runpart, save_process, save_syncdone, save_asyncdone, save_request, save_donecall]
+        with open(save_path,'wb') as f:
+             pickle.dump(save_list, f, -1)        
+
+    def recover_logrecords(self, save_path):
+        with open(save_path,'rb') as f:
+            save_list = pickle.load(f)
+        save_runpart = save_list[0]
+        for runpart in save_runpart:
+            runpart_log = RunPartitionLogRecord(runpart[0], runpart[1], runpart[2], runpart[3], runpart[4])
+            self.runpart_log_records.append(runpart_log)
+        save_process = save_list[1]
+        for process in save_process:
+            if process[5]==Constants.SEND_NODE or process[5]==Constants.RECV_NODE:
+                process_log = ProcessNodeLogRecord(process[0], process[1], process[2], process[3], process[4],\
+                                                   process[5], process[6], process[7], process[8], process[9])
+            else:
+                process_log = ProcessNodeLogRecord(process[0], process[1], process[2], process[3], process[4],\
+                                                   process[5], process[6])
+            self.process_log_records.append(process_log)
+        save_syncdone = save_list[2]
+        for syncdone in save_syncdone:
+            syncdone_log = SyncDoneLogRecord(syncdone[0], syncdone[1], syncdone[2], syncdone[3], syncdone[4])
+            self.syncdone_log_records.append(syncdone_log)
+        save_asyncdone = save_list[3]
+        for asyncdone in save_asyncdone:
+            asyncdone_log = AsyncDoneLogRecord(asyncdone[0], asyncdone[1], asyncdone[2], asyncdone[3], asyncdone[4])
+            self.asyncdone_log_records.append(asyncdone_log)
+        save_request = save_list[4]
+        for request in save_request:
+            request_log = RequestLogRecord(request[0], request[1], request[2], request[3], request[4],
+                                           request[5])
+            self.request_log_records.append(request_log)
+        save_donecall = save_list[5]
+        for donecall in save_donecall:
+            donecall_log = DoneCallbackLogRecord(donecall[0], donecall[1], donecall[2], donecall[3], donecall[4],\
+                                                 donecall[5], donecall[6], donecall[7])
+            self.donecall_log_records.append(donecall_log)
+
