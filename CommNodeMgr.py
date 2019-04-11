@@ -1,5 +1,6 @@
 from CommNode import CommNode
 import re
+import pickle
 from utils import *
 class CommNodeMgr:
     '''
@@ -100,3 +101,18 @@ class CommNodeMgr:
 
     def get_stepids(self):
         return list(self.commnode_list[0].request_time.keys())
+    
+    def save_commnodes(self, save_path):
+        save_list = []
+        for commnode in self.commnode_list:
+            save_list.append(commnode.serialize_node())
+        with open(save_path,'wb') as f:
+             pickle.dump(save_list, f, -1)
+
+    def recover_commnodes(self, save_path):
+        with open(save_path,'rb') as f:
+            save_list = pickle.load(f)
+        for nodeinfo in save_list:
+            commnode = CommNode()
+            commnode.deserialize_node(nodeinfo)
+            self.commnode_list.append(commnode)
