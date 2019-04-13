@@ -85,7 +85,8 @@ class CommNodeMgr:
             min_comm_ts = "2200-01-01 00:00:00.000000"
             max_comm_ts = "2000-01-01 00:00:00.000000"
             for commnode in self.commnode_list:
-                if commnode.recvmachine == recvmachine:
+                if commnode.recvmachine == recvmachine and stepid in commnode.request_time.keys()\
+                    and stepid in commnode.response_endtime.keys():
                     req_ts = commnode.request_time[stepid]
                     resp_ts = commnode.response_endtime[stepid]
                     if timestr_to_timestamp(req_ts) < timestr_to_timestamp(min_comm_ts):
@@ -93,8 +94,8 @@ class CommNodeMgr:
                     if timestr_to_timestamp(resp_ts) > timestr_to_timestamp(max_comm_ts):
                         max_comm_ts = resp_ts
             if max_comm_ts == "2000-01-01 00:00:00.000000" or min_comm_ts == "2200-01-01 00:00:00.000000":
-                return False
-            else:
+                return False, False
+            else: 
                 machine_commtime[recvmachine] = timestr_to_timestamp(max_comm_ts)-timestr_to_timestamp(min_comm_ts)
                 commtime += timestr_to_timestamp(max_comm_ts)-timestr_to_timestamp(min_comm_ts)
         return commtime, machine_commtime
