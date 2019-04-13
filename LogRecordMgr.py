@@ -196,6 +196,8 @@ class LogRecordMgr:
                 response_endtime[stepid] = log_record.timestr
     
     def get_runtime_by_stepid(self, stepid):
+        '''
+        # this method has bug, because logs can have wrong timestamp
         start_ts = "2200-01-01 00:00:00.000000"
         end_ts = "2000-01-01 00:00:00.000000"
         logrecords = self.runpart_log_records + self.process_log_records + self.syncdone_log_records \
@@ -210,6 +212,30 @@ class LogRecordMgr:
             return False
         else:
             return timestr_to_timestamp(end_ts)-timestr_to_timestamp(start_ts)
+        '''
+        start_ts = "2000-01-01 00:00:00.000000"  
+        end_ts = "2000-01-01 00:00:00.000000"        
+        count = -1
+        for logrecord in self.runpart_log_records:
+            if logrecord.stepid == stepid:
+                count = int(logrecord.execution_count)
+                start_ts = logrecord.timestr
+                break
+        if start_ts == "2000-01-01 00:00:00.000000":
+            return False, -1
+        for logrecord in self.runpart_log_records:
+            if logrecord.execution_count == str(count+1):
+                end_ts = logrecord.timestr
+                break
+        if end_ts == "2000-01-01 00:00:00.000000":
+            return False, -1
+        return timestr_to_timestamp(end_ts)-timestr_to_timestamp(start_ts), str(count) 
+    
+    def get_step_starttime(self):
+        step_start_times = {}
+        for logrecord in self.runpart_log_records:
+            step_start_times[logrecord.stepid] = logrecord.timestr
+        return step_start_times
 
     def logs_print(self):
         for log in self.runpart_log_records:
