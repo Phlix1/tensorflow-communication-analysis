@@ -236,6 +236,12 @@ class LogRecordMgr:
         for logrecord in self.runpart_log_records:
             step_start_times[logrecord.stepid] = logrecord.timestr
         return step_start_times
+    
+    def get_step_starttime_by_stepid(self, stepid):
+        for logrecord in self.runpart_log_records:
+            if stepid==logrecord.stepid:
+                return logrecord.timestr
+        return False
 
     def logs_print(self):
         for log in self.runpart_log_records:
