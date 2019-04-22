@@ -569,16 +569,29 @@ def random_degree(comm_node_mgr):
     plot_confusion_matrix(orders)
     plt.show()    
 
-def JCT_vs_Step(comm_node_mgr, log_record_mgr):
+def JCT_CCT_vs_Step(comm_node_mgr, log_record_mgr):
     JCT = []
+    CCT = []
     Step_Count = []
     stepids = comm_node_mgr.commnode_list[0].response_endtime.keys()
     for stepid in stepids:
+        step_start_time = log_record_mgr.get_step_starttime_by_stepid(stepid)
+        if step_start_time==False:
+            continue
+        step_start_time = timestr_to_timestamp(step_start_time)
+        max_respend = -1.0
+        for commnode in comm_node_mgr.commnode_list:
+            if "worker" in commnode.recvmachine and stepid in commnode.response_endtime.keys() and\
+               stepid in commnode.using_time.keys() and commnode.get_datasize()*4>=10:
+                if timestr_to_timestamp(commnode.response_endtime[stepid])>max_respend:
+                    max_respend = timestr_to_timestamp(commnode.response_endtime[stepid])                           
         jct, count = log_record_mgr.get_runtime_by_stepid(stepid)
-        if jct!=False and count!=-1:
+        if jct!=False and count!=-1 and max_respend>0.0:
             JCT.append(jct)
+            CCT.append(max_respend-step_start_time) 
             Step_Count.append(count)
     plt.plot(Step_Count, JCT)
+    plt.plot(Step_Count, CCT)
     plt.show()
     
     
@@ -593,16 +606,16 @@ if __name__ == '__main__':
     model_index = 5
     batch_index = 3
     
-    #commnode_savepath = "./tensorflow_results/"+model_list[model_index]+"Log/pre/"+model_list[model_index].lower()+"-"+batchsize[batch_index]+"-commnode.pkl"
-    #logrecord_savepath = "./tensorflow_results/"+model_list[model_index]+"Log/pre/"+model_list[model_index].lower()+"-"+batchsize[batch_index]+"-logrecords.pkl"
-    commnode_savepath = "./tensorflow_results_2/"+model_list[model_index]+"/"+model_list[model_index].lower()+"-1_1-128-commnode.pkl"
-    logrecord_savepath = "./tensorflow_results_2/"+model_list[model_index]+"/"+model_list[model_index].lower()+"-1_1-128-logrecords.pkl"
+    commnode_savepath = "./tensorflow_results/"+model_list[model_index]+"Log/pre/"+model_list[model_index].lower()+"-"+batchsize[batch_index]+"-commnode.pkl"
+    logrecord_savepath = "./tensorflow_results/"+model_list[model_index]+"Log/pre/"+model_list[model_index].lower()+"-"+batchsize[batch_index]+"-logrecords.pkl"
+    #commnode_savepath = "./tensorflow_results_2/"+model_list[model_index]+"/"+model_list[model_index].lower()+"-1_1-128-commnode.pkl"
+    #logrecord_savepath = "./tensorflow_results_2/"+model_list[model_index]+"/"+model_list[model_index].lower()+"-1_1-128-logrecords.pkl"
     comm_node_mgr = CommNodeMgr()
     comm_node_mgr.recover_commnodes(commnode_savepath)
     log_record_mgr = LogRecordMgr()
     log_record_mgr.recover_logrecords(logrecord_savepath)
     #random_degree(comm_node_mgr)
-    JCT_vs_Step(comm_node_mgr, log_record_mgr)
+    JCT_CCT_vs_Step(comm_node_mgr, log_record_mgr)
     #Disorder_Degree(comm_node_mgr)
     #bandwidth_distr(comm_node_mgr)
     #JCT_vs_CCT(comm_node_mgr, log_record_mgr)
