@@ -150,6 +150,36 @@ class LogRecordMgr:
         for log_record in self.donecall_log_records:
             if tensorname==log_record.tensor_name:
                 return log_record.tensor_shape
+    def get_opsize_by_nodename(self, nodename):
+        total_size = 0.0
+        count = 0
+        for process_log in self.process_log_records:
+            if nodename==process_log.nodename:
+                stepid = process_log.stepid
+                start_time = timestr_to_timestamp(process_log.timestr)
+                end_time = -1.0
+                for sync_log in self.syncdone_log_records:
+                    if nodename==sync_log.nodename and stepid==sync_log.stepid:
+                        end_time = timestr_to_timestamp(sync_log.timestr)
+                        if end_time-start_time>0 and end_time-start_time<1000:
+                            total_size += end_time-start_time
+                            count += 1
+                        break
+                if end_time<0.0:
+                    for async_log in self.asyncdone_log_records:
+                        if nodename==async_log.nodename and stepid==async_log.stepid:
+                            end_time = timestr_to_timestamp(async_log.timestr)
+                            if end_time-start_time>0 and end_time-start_time<1000:
+                                total_size += end_time-start_time
+                                count += 1
+                            break   
+            if count>10:
+                break
+        if count>0 and total_size>0.0:
+            return total_size/count
+        else:
+            return False
+
     def get_sendtimes_by_sendnode(self, sendnode, send_time):
         for log_record in self.syncdone_log_records:
             if log_record.nodename == sendnode:
