@@ -1,6 +1,6 @@
 import os
 class op(object):
-    def __init__(self, op_name, optype, op_size, op_input, op_tensorname=''):
+    def __init__(self, op_name='', optype='', op_size=0.0, op_input=[], op_tensorname=''):
         self.op_name = op_name # name of the op
         self.op_type = optype # N for network and C for computing
         self.op_size = op_size # communicaiton time of this op or computing time of this op
@@ -17,3 +17,12 @@ class op(object):
         print("op input:", self.op_input)
         print("op tensorname", self.op_tensorname)
         print("--------------------------")
+    def serialize_op(self):
+        serial_result = [self.op_name, self.op_type, self.op_size, self.op_input, self.op_tensorname]
+        return serial_result
+    def deserialize_op(self, serial_result):
+        self.op_name = serial_result[0]
+        self.op_type = serial_result[1]
+        self.op_size = serial_result[2]
+        self.op_input = serial_result[3]
+        self.op_tensorname = serial_result[4]

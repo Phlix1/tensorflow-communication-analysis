@@ -41,6 +41,19 @@ class opMgr:
                     print("Error: cannot get the computation time of op ", op_item.op_name)
                     os._exit(0)
                 op_item.op_size = compnode_size
+    def save_ops(self, save_path):
+        save_list = []
+        for key in self.op_dict:
+            save_list.append(self.op_dict[key].serialize_op())
+        with open(save_path,'wb') as f:
+            pickle.dump(save_list, f, -1)        
+    def recover_ops(self, save_path):
+        with open(save_path,'rb') as f:
+            save_list = pickle.load(f)
+        for opinfo in save_list:
+            opitem = op()
+            opitem.deserialize_op(opinfo)
+            self.op_dict[opitem.op_name] = opitem     
     def ops_show(self):
         count = 0
         for key in self.op_dict.keys():
