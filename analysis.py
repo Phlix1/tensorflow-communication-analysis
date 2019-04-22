@@ -586,7 +586,7 @@ def JCT_CCT_vs_Step(comm_node_mgr, log_record_mgr):
                 if timestr_to_timestamp(commnode.response_endtime[stepid])>max_respend:
                     max_respend = timestr_to_timestamp(commnode.response_endtime[stepid])                           
         jct, count = log_record_mgr.get_runtime_by_stepid(stepid)
-        if jct!=False and count!=-1 and max_respend>0.0:
+        if jct!=False and count!=-1 and max_respend>0.0 and jct>0.0:
             JCT.append(jct)
             CCT.append(max_respend-step_start_time) 
             Step_Count.append(count)
@@ -606,10 +606,10 @@ if __name__ == '__main__':
     model_index = 5
     batch_index = 3
     
-    commnode_savepath = "./tensorflow_results/"+model_list[model_index]+"Log/pre/"+model_list[model_index].lower()+"-"+batchsize[batch_index]+"-commnode.pkl"
-    logrecord_savepath = "./tensorflow_results/"+model_list[model_index]+"Log/pre/"+model_list[model_index].lower()+"-"+batchsize[batch_index]+"-logrecords.pkl"
-    #commnode_savepath = "./tensorflow_results_2/"+model_list[model_index]+"/"+model_list[model_index].lower()+"-1_1-128-commnode.pkl"
-    #logrecord_savepath = "./tensorflow_results_2/"+model_list[model_index]+"/"+model_list[model_index].lower()+"-1_1-128-logrecords.pkl"
+    #commnode_savepath = "./tensorflow_results/"+model_list[model_index]+"Log/pre/"+model_list[model_index].lower()+"-"+batchsize[batch_index]+"-commnode.pkl"
+    #logrecord_savepath = "./tensorflow_results/"+model_list[model_index]+"Log/pre/"+model_list[model_index].lower()+"-"+batchsize[batch_index]+"-logrecords.pkl"
+    commnode_savepath = "./tensorflow_results_2/"+model_list[model_index]+"/"+model_list[model_index].lower()+"-1_1-128-commnode.pkl"
+    logrecord_savepath = "./tensorflow_results_2/"+model_list[model_index]+"/"+model_list[model_index].lower()+"-1_1-128-logrecords.pkl"
     comm_node_mgr = CommNodeMgr()
     comm_node_mgr.recover_commnodes(commnode_savepath)
     log_record_mgr = LogRecordMgr()
