@@ -564,12 +564,23 @@ def random_degree(comm_node_mgr):
         for resp in step_resp:
             step_order.append(sorted_resp.index(resp))
         orders.append(step_order)
-        if len(orders)>180:
-            break
+        #if len(orders)>180:
+        #    break
     plot_confusion_matrix(orders)
     plt.show()    
-    
 
+def JCT_vs_Step(comm_node_mgr, log_record_mgr):
+    JCT = []
+    Step_Count = []
+    stepids = comm_node_mgr.commnode_list[0].response_endtime.keys()
+    for stepid in stepids:
+        jct, count = log_record_mgr.get_runtime_by_stepid(stepid)
+        if jct!=False and count!=-1:
+            JCT.append(jct)
+            Step_Count.append(count)
+    plt.plot(Step_Count, JCT)
+    plt.show()
+    
     
 
 
@@ -580,17 +591,18 @@ if __name__ == '__main__':
     comm_node_mgr_dict = {}
     stepinfo_mgr_dict = {}
     model_index = 5
-    batch_index = 6
+    batch_index = 3
     
     #commnode_savepath = "./tensorflow_results/"+model_list[model_index]+"Log/pre/"+model_list[model_index].lower()+"-"+batchsize[batch_index]+"-commnode.pkl"
     #logrecord_savepath = "./tensorflow_results/"+model_list[model_index]+"Log/pre/"+model_list[model_index].lower()+"-"+batchsize[batch_index]+"-logrecords.pkl"
     commnode_savepath = "./tensorflow_results_2/"+model_list[model_index]+"/"+model_list[model_index].lower()+"-1_1-128-commnode.pkl"
-    #logrecord_savepath = "./tensorflow_results_2/"+model_list[model_index]+"/"+model_list[model_index].lower()+"-1_1-128-logrecords.pkl"
+    logrecord_savepath = "./tensorflow_results_2/"+model_list[model_index]+"/"+model_list[model_index].lower()+"-1_1-128-logrecords.pkl"
     comm_node_mgr = CommNodeMgr()
     comm_node_mgr.recover_commnodes(commnode_savepath)
-    #log_record_mgr = LogRecordMgr()
-    #log_record_mgr.recover_logrecords(logrecord_savepath)
-    random_degree(comm_node_mgr)
+    log_record_mgr = LogRecordMgr()
+    log_record_mgr.recover_logrecords(logrecord_savepath)
+    #random_degree(comm_node_mgr)
+    JCT_vs_Step(comm_node_mgr, log_record_mgr)
     #Disorder_Degree(comm_node_mgr)
     #bandwidth_distr(comm_node_mgr)
     #JCT_vs_CCT(comm_node_mgr, log_record_mgr)
