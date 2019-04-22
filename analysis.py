@@ -590,10 +590,9 @@ def JCT_CCT_vs_Step(comm_node_mgr, log_record_mgr):
             JCT.append(jct)
             CCT.append(max_respend-step_start_time) 
             Step_Count.append(count)
-    fig, ax1 = plt.subplots()
-    ax2 = ax1.twinx()
-    ax1.plot(Step_Count, JCT, 'g-')
-    ax2.plot(Step_Count, CCT, 'b-')
+    plt.plot(Step_Count, np.array(JCT)/max(JCT), 'g-', label="JCT")
+    plt.plot(Step_Count, np.array(CCT)/max(CCT), 'b-', label="CCT")
+    plt.legend()
     plt.show()
     
     
