@@ -64,10 +64,10 @@ def worker_logfile_processing(worker_logfile_path, log_record_mgr):
 if __name__ == '__main__':
     worker_logpath = "./tensorflow_results_2/VGG16/vgg16-1_1-128-logfile-worker0.txt" 
     log_record_mgr = LogRecordMgr()
-    #graph_def = worker_logfile_processing(worker_logpath, log_record_mgr)
+    graph_def = worker_logfile_processing(worker_logpath, log_record_mgr)
     op_mgr = opMgr()
-    #op_mgr.add_from_graph(graph_def)
-    #op_mgr.add_from_logrecord(log_record_mgr)
+    op_mgr.add_from_graph(graph_def)
+    op_mgr.add_from_logrecord(log_record_mgr)
     #op_mgr.save_ops("./tensorflow_results_2/VGG16/vgg16-1_1-128-op.pkl")
-    op_mgr.recover_ops("./tensorflow_results_2/VGG16/vgg16-1_1-128-op.pkl")
+    #op_mgr.recover_ops("./tensorflow_results_2/VGG16/vgg16-1_1-128-op.pkl")
     op_mgr.ops_show()
