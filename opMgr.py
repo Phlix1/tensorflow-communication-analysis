@@ -23,10 +23,16 @@ class opMgr:
                 for item in node.input:
                     if item[0]=='^':
                         item = item[1:]
-                    op_input.append(item)
+                    if ':' in item:
+                        item = item[0:item.index(':')]
+                    for node in graph_def.node:
+                        if node.name==item:
+                            op_input.append(item)
+                            break
                 opnode = op(op_name, op_type, op_size, op_input, op_tensorname)
                 self.op_dict[op_name] = opnode
     def add_from_logrecord(self, log_record_mgr):
+        del_ops = []
         for key in self.op_dict.keys():
             op_item = self.op_dict[key]
             if op_item.op_type=='N':
@@ -38,9 +44,19 @@ class opMgr:
             else:
                 compnode_size = log_record_mgr.get_opsize_by_nodename(op_item.op_name)
                 if compnode_size==False:
-                    print("Error: cannot get the computation time of op ", op_item.op_name)
-                    os._exit(0)
-                op_item.op_size = compnode_size
+                    del_ops.append(op_item.op_name)
+                else:
+                    op_item.op_size = compnode_size
+        for del_op in del_ops:
+            del self.op_dict[del_op]
+        for key in self.op_dict.keys():
+            op_item = self.op_dict[key]
+            new_input = []
+            for input_item in op_item.op_input:
+                if input_item not in del_ops:
+                    new_input.append(input_item)
+            op_item.op_input = new_input
+        print("Warning: some ops are deleted: ", del_ops)
     def save_ops(self, save_path):
         save_list = []
         for key in self.op_dict:

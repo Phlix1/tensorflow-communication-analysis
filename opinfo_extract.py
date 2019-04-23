@@ -68,6 +68,6 @@ if __name__ == '__main__':
     op_mgr = opMgr()
     op_mgr.add_from_graph(graph_def)
     op_mgr.add_from_logrecord(log_record_mgr)
-    #op_mgr.save_ops("./tensorflow_results_2/VGG16/vgg16-1_1-128-op.pkl")
+    op_mgr.save_ops("./tensorflow_results_2/VGG16/test-vgg16-1_1-128-op.pkl")
     #op_mgr.recover_ops("./tensorflow_results_2/VGG16/vgg16-1_1-128-op.pkl")
     op_mgr.ops_show()
