@@ -5,6 +5,7 @@ from utils import *
 from matplotlib import pyplot as plt
 import numpy as np
 from scipy.stats import t
+import math
 
 def comm_size_distri(comm_node_mgr_dict):
     # Analyse the distribution of parameter sizes
@@ -594,18 +595,110 @@ def JCT_CCT_vs_Step(comm_node_mgr, log_record_mgr):
     plt.plot(Step_Count, np.array(CCT)/max(CCT), 'b-', label="CCT")
     plt.legend()
     plt.show()
-    
-    
 
+def JCT_vs_ParaRespTime(comm_node, log_record_mgr, plot=False):
+    JCT = []
+    para_resp = []
+    stepids = comm_node.response_endtime.keys()
+    for stepid in stepids:
+        step_start_time = log_record_mgr.get_step_starttime_by_stepid(stepid)
+        if step_start_time==False:
+            continue
+        step_start_time = timestr_to_timestamp(step_start_time)
+        respend_time = timestr_to_timestamp(comm_node.response_endtime[stepid])
+        jct, count = log_record_mgr.get_runtime_by_stepid(stepid)
+        if respend_time-step_start_time>0.0 and respend_time-step_start_time<100 and\
+           jct!=False and count!=-1 and jct>0.0:
+           JCT.append(jct)
+           para_resp.append(respend_time-step_start_time)
+    result = np.array([JCT, para_resp])
+    if plot:
+        plt.plot(range(len(JCT)), np.array(JCT), 'g-', label="JCT")
+        plt.plot(range(len(para_resp)), np.array(para_resp), 'b-', label="Parameter Response Time")
+        plt.legend()
+        plt.show()
+    return np.cov(result)[0][1]
 
+def Key_ParaRespTime_with_Cov(comm_node_mgr, log_record_mgr):
+    comm_list = comm_node_mgr.commnode_list
+    cov_list = []
+    cov_index = []
+    count = 0
+    for commnode in comm_list:
+        if "worker" in commnode.recvmachine and commnode.get_datasize()*4>=10:
+            cov_list.append(JCT_vs_ParaRespTime(commnode, log_record_mgr))
+            cov_index.append(str(count))
+        count += 1
+    plt.plot(cov_index, cov_list)
+    plt.grid()
+    plt.show()
+
+def Key_ParaOrder_with_Cov(comm_node_mgr, log_record_mgr, plot=False, index=0):
+    JCT = []
+    nodesize = []
+    record_size_flag = True
+    para_resp = []
+    stepids = list(comm_node_mgr.commnode_list[0].response_endtime.keys())
+    stepids.sort()
+    commnode_num = 0
+    for stepid in stepids:
+        step_start_time = log_record_mgr.get_step_starttime_by_stepid(stepid)
+        if step_start_time==False:
+            continue
+        step_start_time = timestr_to_timestamp(step_start_time)
+        step_resp = []
+        commnode_num = 0
+        for commnode in comm_node_mgr.commnode_list:
+            if "worker" in commnode.recvmachine and commnode.get_datasize()*4>=10:
+                respend_time = timestr_to_timestamp(commnode.response_endtime[stepid])
+                if respend_time-step_start_time>0.0 and respend_time-step_start_time<100:
+                    step_resp.append(respend_time-step_start_time)
+                else:
+                    step_resp.append(0.0)
+                commnode_num += 1
+                if record_size_flag:
+                    nodesize.append(math.log(commnode.get_datasize()))
+        record_size_flag = False
+        jct, count = log_record_mgr.get_runtime_by_stepid(stepid)
+        if jct!=False and count!=-1 and jct>0.0:
+           JCT.append(jct)
+           para_resp.append(step_resp)
+    stepnum = len(JCT)
+    commnode_order_list = []
+    for i in range(commnode_num):
+        commnode_order = []
+        for j in range(stepnum):
+            sorted_resp = sorted(para_resp[j])
+            commnode_order.append(sorted_resp.index(para_resp[j][i]))
+        commnode_order_list.append(commnode_order)
+    if plot:
+        fig, ax1 = plt.subplots()
+        ax2 = ax1.twinx()
+        ax1.plot(range(len(JCT)), np.array(JCT), 'g-', label="JCT")
+        ax2.plot(range(len(commnode_order_list[index])), np.array(commnode_order_list[index]),\
+                'b-', label="Parameter Order")
+        plt.legend()
+        plt.show()
+    cov_list = []
+    cov_index = []
+    for commnode_order in commnode_order_list:
+        temp = np.array([JCT, commnode_order])
+        cov_list.append(np.cov(temp)[0][1])
+    fig, ax1 = plt.subplots()
+    ax2 = ax1.twinx() 
+    ax1.set_zorder(ax2.get_zorder()+1)
+    ax1.patch.set_visible(False)
+    ax2.bar(range(len(cov_list)), nodesize)   
+    ax1.plot(range(len(cov_list)), cov_list, 'r-', marker='o')
+    plt.show()
 
 if __name__ == '__main__':
     model_list = ["Lenet", "AlexNet", "LSTM", "Siamese", "VGG16", "Inception", "ResNet152"]
     batchsize = ["1", "5", "10", "20", "40", "80", "120"]
     comm_node_mgr_dict = {}
     stepinfo_mgr_dict = {}
-    model_index = 5
-    batch_index = 3
+    model_index = 4
+    batch_index = 6
     
     #commnode_savepath = "./tensorflow_results/"+model_list[model_index]+"Log/pre/"+model_list[model_index].lower()+"-"+batchsize[batch_index]+"-commnode.pkl"
     #logrecord_savepath = "./tensorflow_results/"+model_list[model_index]+"Log/pre/"+model_list[model_index].lower()+"-"+batchsize[batch_index]+"-logrecords.pkl"
@@ -615,8 +708,11 @@ if __name__ == '__main__':
     comm_node_mgr.recover_commnodes(commnode_savepath)
     log_record_mgr = LogRecordMgr()
     log_record_mgr.recover_logrecords(logrecord_savepath)
+    Key_ParaOrder_with_Cov(comm_node_mgr, log_record_mgr)
+    #Key_ParaRespTime_with_Cov(comm_node_mgr, log_record_mgr)
+    #JCT_vs_Para(comm_node_mgr.commnode_list[29], log_record_mgr, plot=True)
     #random_degree(comm_node_mgr)
-    JCT_CCT_vs_Step(comm_node_mgr, log_record_mgr)
+    #JCT_CCT_vs_Step(comm_node_mgr, log_record_mgr)
     #Disorder_Degree(comm_node_mgr)
     #bandwidth_distr(comm_node_mgr)
     #JCT_vs_CCT(comm_node_mgr, log_record_mgr)
