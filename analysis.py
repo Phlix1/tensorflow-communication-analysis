@@ -5,6 +5,7 @@ from utils import *
 from matplotlib import pyplot as plt
 import numpy as np
 from scipy.stats import t
+import math
 
 def comm_size_distri(comm_node_mgr_dict):
     # Analyse the distribution of parameter sizes
@@ -634,6 +635,8 @@ def Key_ParaRespTime_with_Cov(comm_node_mgr, log_record_mgr):
 
 def Key_ParaOrder_with_Cov(comm_node_mgr, log_record_mgr, plot=False, index=0):
     JCT = []
+    nodesize = []
+    record_size_flag = True
     para_resp = []
     stepids = list(comm_node_mgr.commnode_list[0].response_endtime.keys())
     stepids.sort()
@@ -653,6 +656,9 @@ def Key_ParaOrder_with_Cov(comm_node_mgr, log_record_mgr, plot=False, index=0):
                 else:
                     step_resp.append(0.0)
                 commnode_num += 1
+                if record_size_flag:
+                    nodesize.append(math.log(commnode.get_datasize()))
+        record_size_flag = False
         jct, count = log_record_mgr.get_runtime_by_stepid(stepid)
         if jct!=False and count!=-1 and jct>0.0:
            JCT.append(jct)
@@ -678,7 +684,12 @@ def Key_ParaOrder_with_Cov(comm_node_mgr, log_record_mgr, plot=False, index=0):
     for commnode_order in commnode_order_list:
         temp = np.array([JCT, commnode_order])
         cov_list.append(np.cov(temp)[0][1])
-    plt.plot(range(len(cov_list)), cov_list)
+    fig, ax1 = plt.subplots()
+    ax2 = ax1.twinx() 
+    ax1.set_zorder(ax2.get_zorder()+1)
+    ax1.patch.set_visible(False)
+    ax2.bar(range(len(cov_list)), nodesize)   
+    ax1.plot(range(len(cov_list)), cov_list, 'r-', marker='o')
     plt.show()
 
 if __name__ == '__main__':
@@ -686,13 +697,13 @@ if __name__ == '__main__':
     batchsize = ["1", "5", "10", "20", "40", "80", "120"]
     comm_node_mgr_dict = {}
     stepinfo_mgr_dict = {}
-    model_index = 1
-    batch_index = 4
+    model_index = 4
+    batch_index = 6
     
-    commnode_savepath = "./tensorflow_results/"+model_list[model_index]+"Log/pre/"+model_list[model_index].lower()+"-"+batchsize[batch_index]+"-commnode.pkl"
-    logrecord_savepath = "./tensorflow_results/"+model_list[model_index]+"Log/pre/"+model_list[model_index].lower()+"-"+batchsize[batch_index]+"-logrecords.pkl"
-    #commnode_savepath = "./tensorflow_results_2/"+model_list[model_index]+"/"+model_list[model_index].lower()+"-1_1-128-commnode.pkl"
-    #logrecord_savepath = "./tensorflow_results_2/"+model_list[model_index]+"/"+model_list[model_index].lower()+"-1_1-128-logrecords.pkl"
+    #commnode_savepath = "./tensorflow_results/"+model_list[model_index]+"Log/pre/"+model_list[model_index].lower()+"-"+batchsize[batch_index]+"-commnode.pkl"
+    #logrecord_savepath = "./tensorflow_results/"+model_list[model_index]+"Log/pre/"+model_list[model_index].lower()+"-"+batchsize[batch_index]+"-logrecords.pkl"
+    commnode_savepath = "./tensorflow_results_2/"+model_list[model_index]+"/"+model_list[model_index].lower()+"-1_1-128-commnode.pkl"
+    logrecord_savepath = "./tensorflow_results_2/"+model_list[model_index]+"/"+model_list[model_index].lower()+"-1_1-128-logrecords.pkl"
     comm_node_mgr = CommNodeMgr()
     comm_node_mgr.recover_commnodes(commnode_savepath)
     log_record_mgr = LogRecordMgr()
