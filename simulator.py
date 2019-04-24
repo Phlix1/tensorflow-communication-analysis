@@ -1,14 +1,19 @@
 from opMgr import opMgr
 from core import core
 import sys
+import networkx as nx
+from math import floor
+import random
 
 NUM_OF_CORES = 1
-
+HEAD_PERCENT = 0.5
+TAIL_PERCENT = 0.1
 # GLOBAL VARIABLES
 # dict for all ops
 op_mgr = opMgr()
 # dict for all flows
 flowPri = {}
+flowDep = {}
 # list record the task status
 finList = []
 # unFinList only keep the computing tasks
@@ -17,28 +22,65 @@ unFinList = []
 readyList = []
 # core set (plus one for flows, index 0)
 coreList = []
+
+flow_sum = 0.0
+computing_sum = 0.0
 # init the dict
 def initEnv():
-    op_mgr.recover_ops("./resnet152-1_1-128-op.pkl")
+    op_mgr.recover_ops("./vgg16-1_1-128-op.pkl")
+    global computing_sum
     for key in op_mgr.op_dict.keys():
         if (op_mgr.op_dict[key].op_type == 'C'):
             unFinList.append(key)
+            computing_sum += op_mgr.op_dict[key].op_size
     for i in range(0,NUM_OF_CORES + 1):
         newCore = core()
         coreList.append(newCore)
     #print(coreList)
-    print(len(unFinList))
+    print("Sum load of %d computing is %f" % (len(unFinList), computing_sum))
+    #print(len(unFinList))
     #op_mgr.ops_show()
 
 # assign the priorities for all flows
 def assignPri():
     flow_num = 0
+    global flow_sum
     for key in op_mgr.op_dict.keys():
         if (op_mgr.op_dict[key].op_type == 'N'):
             flow_num += 1
-            flowPri[str(flow_num)] = op_mgr.op_dict[key].op_name
-    print(flowPri)
-    #print(flow_num)
+            flow_sum += op_mgr.op_dict[key].op_size
+    print("Sum load of %d flow is %f" % (flow_num, flow_sum))
+
+    # find a topo sort of all flows
+    # find the depth of each flow
+    # 1. build the digraph of this job
+    job_dag = nx.DiGraph()
+    for key in op_mgr.op_dict.keys():
+        job_dag.add_node(key)
+    #print(job_dag.number_of_nodes())
+    for key in op_mgr.op_dict.keys():
+        if len(op_mgr.op_dict[key].op_input) != 0:
+            for input_op in op_mgr.op_dict[key].op_input:
+                job_dag.add_edge(input_op, key)
+    #print(job_dag.number_of_edges())
+    topo = []
+    for key in list(nx.topological_sort(job_dag)):
+        if (op_mgr.op_dict[key].op_type == 'N'):
+            topo.append(key)
+    #print(len(topo))
+    #rint(topo)
+    order = topo
+    #print(order)
+    head_num = floor(len(topo)*HEAD_PERCENT)
+    shuffle_1 = order[head_num:]
+    random.shuffle(shuffle_1)
+    order[head_num:] = shuffle_1
+    #print(len(order))
+
+    # inser the flows into prio
+    for i in range(0, len(order)):
+        flowPri[str(i+1)] = order[i]
+
 
 
 # get next time
@@ -77,18 +119,19 @@ def simulate():
     step = 0
     while (len(unFinList) != 0):
     #while (step <= 194):
+        #print(coreList[1].finish_time)
         step = step + 1
         next_time = nextTime(0.0)
-        print("===step %d, time %f" %(step, next_time))
+        #print("===step %d, time %f" %(step, next_time))
         #print("= 11 time %f, %f, %f" % (coreList[0].next_time, coreList[1].next_time, coreList[2].next_time))
         # initial state
         if next_time == sys.float_info.max:
             # add first flow to the core[0]
-            print("Initial State")
+            #print("Initial State")
             coreList[0].task_list.append(flowPri['1'])
             coreList[0].time_list.append(op_mgr.op_dict[flowPri['1']].op_size)
             coreList[0].next_time = coreList[0].time_list[-1]
-            coreList[0].finish_time = next_time
+            coreList[0].finish_time = coreList[0].time_list[-1]
             #print(coreList[0].next_time)
             for task in unFinList:
                 if checkReady(task) == True:
@@ -106,13 +149,13 @@ def simulate():
                     readyList.remove(readyList[0])
                     i = i + 1
             else:
-                print("not enough cores")
+                #print("not enough cores")
                 for i in range(1, NUM_OF_CORES + 1):
                     #print(i)
                     coreList[i].task_list.append(readyList[0])
                     coreList[i].time_list.append(op_mgr.op_dict[readyList[0]].op_size)
                     coreList[i].next_time = coreList[i].time_list[-1]
-                    print(coreList[i].next_time)
+                    #print(coreList[i].next_time)
                     coreList[i].finish_time = coreList[i].next_time
                     readyList.remove(readyList[0])
             #print(len(readyList))
@@ -124,7 +167,7 @@ def simulate():
                     newFinTask = coreList[i].task_list[-1]
                     if newFinTask not in finList:
                         finList.append(newFinTask)
-                        print("%d tasks have finished, new task is %s . " % (len(finList), newFinTask))
+                        #print("%d tasks have finished, new task is %s . " % (len(finList), newFinTask))
             #print(len(finList))
             #print(newFinTask)
             # get ready tasks
@@ -133,7 +176,7 @@ def simulate():
                 if checkReady(task) == True:
                     unFinList.remove(task)
                     readyList.append(task)
-            print("Num of ready tasks is %d and flow id is %d" % (len(readyList), len(coreList[0].task_list)))
+            #print("Num of ready tasks is %d and flow id is %d" % (len(readyList), len(coreList[0].task_list)))
             # assign ready tasks to all cores
             for i in range(0, NUM_OF_CORES + 1):
                 # need action at this time
@@ -146,6 +189,7 @@ def simulate():
                             new_time = next_time + op_mgr.op_dict[flowPri[str(newFlowIndex)]].op_size
                             coreList[0].time_list.append(new_time)
                             coreList[0].next_time = new_time
+                            coreList[0].finish_time = new_time
                     # for computing cores
                     else:
                         if len(readyList) != 0:
