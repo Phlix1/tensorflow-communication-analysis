@@ -5,9 +5,11 @@ import networkx as nx
 from math import floor
 import random
 
-NUM_OF_CORES = 1
-HEAD_PERCENT = 0.5
+NUM_OF_CORES = 20
+HEAD_PERCENT = 0
 TAIL_PERCENT = 0.1
+FLOW_MAGNIFY = 1
+
 # GLOBAL VARIABLES
 # dict for all ops
 op_mgr = opMgr()
@@ -28,6 +30,9 @@ computing_sum = 0.0
 # init the dict
 def initEnv():
     op_mgr.recover_ops("./vgg16-1_1-128-op.pkl")
+    for key in op_mgr.op_dict.keys():
+        if (op_mgr.op_dict[key].op_type == 'N'):
+            op_mgr.op_dict[key].op_size *= FLOW_MAGNIFY
     global computing_sum
     for key in op_mgr.op_dict.keys():
         if (op_mgr.op_dict[key].op_type == 'C'):
@@ -51,6 +56,17 @@ def assignPri():
             flow_sum += op_mgr.op_dict[key].op_size
     print("Sum load of %d flow is %f" % (flow_num, flow_sum))
 
+
+    topo = []
+    for i in range(0, flow_num):
+        for key in op_mgr.op_dict.keys():
+            if (op_mgr.op_dict[key].op_index == i) and op_mgr.op_dict[key].op_type == 'N':
+                topo.append(key)
+    
+    print(topo)
+    order = topo
+    #order.reverse()
+    '''
     # find a topo sort of all flows
     # find the depth of each flow
     # 1. build the digraph of this job
@@ -70,6 +86,7 @@ def assignPri():
     #print(len(topo))
     #rint(topo)
     order = topo
+    #order.reverse()
     #print(order)
     head_num = floor(len(topo)*HEAD_PERCENT)
     shuffle_1 = order[head_num:]
@@ -77,9 +94,11 @@ def assignPri():
     order[head_num:] = shuffle_1
     #print(len(order))
 
+    '''
     # inser the flows into prio
     for i in range(0, len(order)):
         flowPri[str(i+1)] = order[i]
+    #print(flowPri)
 
 
 
@@ -109,9 +128,10 @@ def checkReady(task_name):
 def printStats():
     print("========  Simulation Summary ========")
     for i in range(0, NUM_OF_CORES + 1):
-        print("CORE %d :" % i)
-        print("Task number : %d" % len(coreList[i].task_list))
-        print("Finish time : %f" % coreList[i].finish_time)
+        if (len(coreList[i].task_list) > 0):
+            print("CORE %d :" % i)
+            print("Task number : %d" % len(coreList[i].task_list))
+            print("Finish time : %f" % coreList[i].finish_time)
     
 # begin simulate
 def simulate():
@@ -207,6 +227,11 @@ def simulate():
                     #print("########### Reset time to %f" % new_time)
                     coreList[i].next_time = time_2
         #print("= 22 time %f, %f, %f" % (coreList[0].next_time, coreList[1].next_time, coreList[2].next_time))
+
+# do the experiments
+def run_experiments():
+    pass
+
 # main function 
 def main():
     initEnv()
