@@ -8,16 +8,20 @@ class opMgr:
     def __init__(self):
         self.op_dict = {}
     def add_from_graph(self, graph_def):
+        comm_node_index = 0
         for node in graph_def.node:
             if "worker" in node.device: # we only consider the reducer(worker)
                 op_name = node.name
                 op_type = ''
                 op_size = 0.0
                 op_tensorname = ''
+                op_index = -1
                 op_input = []
                 if node.op=="_Recv" and node.attr["recv_device"].s!=node.attr["send_device"].s:
                     op_type = 'N'
                     op_tensorname = str(node.attr["tensor_name"].s, encoding = "utf-8")
+                    op_index = comm_node_index
+                    comm_node_index += 1
                 else:
                     op_type = 'C'
                 for item in node.input:
@@ -29,7 +33,7 @@ class opMgr:
                         if node.name==item:
                             op_input.append(item)
                             break
-                opnode = op(op_name, op_type, op_size, op_input, op_tensorname)
+                opnode = op(op_name, op_type, op_size, op_input, op_tensorname, op_index)
                 self.op_dict[op_name] = opnode
     def add_from_logrecord(self, log_record_mgr):
         del_ops = []
