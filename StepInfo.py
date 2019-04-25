@@ -1,16 +1,14 @@
 class StepInfo:
-    def __init__(self, stepid, execution_count, runtime, commtime, machine_commtime):
-        self.stepid=stepid
+    def __init__(self, stepids, start_ts, execution_count):
+        self.stepids=stepids
+        self.start_ts = start_ts
         self.execution_count = execution_count
-        self.runtime = runtime
-        # NOTE: this commtime is only useful when we only analyse the logrecords of 1PS+1Worker
-        self.commtime = commtime 
-        self.machine_commtime = machine_commtime
+        self.JCT = 0.0
+        self.CCT = 0.0
     def stepinfo_print(self):
         print("--------------------------")
-        print("Step ID: ", self.stepid)
         print("Execution Count: ", self.execution_count)
-        print("Worker Run Time of Step: ", self.runtime)
-        print("Communication Time: ", self.commtime)
-        print("Machine Comm Time: ", self.machine_commtime)
+        print("Step IDs: ", self.stepids) 
+        print("Step JCT: ", self.JCT)    
+        print("Step CCT: ", self.CCT)           
         print("--------------------------")
