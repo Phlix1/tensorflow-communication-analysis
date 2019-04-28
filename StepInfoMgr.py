@@ -1,5 +1,6 @@
 from StepInfo import StepInfo
 from utils import *
+import pickle
 class StepInforMgr:
     def __init__(self):
         self.stepinfo_list = []
@@ -36,4 +37,19 @@ class StepInforMgr:
     def show_steps(self):
         for stepinfo in self.stepinfo_list:
             stepinfo.stepinfo_print()
+
+    def save_stepinfos(self, save_path):
+        save_list = []
+        for stepinfo in self.stepinfo_list:
+            save_list.append(stepinfo.serialize_stepinfo())
+        with open(save_path,'wb') as f:
+            pickle.dump(save_list, f, -1)
+
+    def recover_stepinfos(self, save_path):
+        with open(save_path,'rb') as f:
+            save_list = pickle.load(f)
+        for si in save_list:
+            stepinfo = StepInfo()
+            stepinfo.deserialize_stepinfo(si)
+            self.stepinfo_list.append(stepinfo)
             

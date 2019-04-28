@@ -108,7 +108,7 @@ class CommNodeMgr:
         for commnode in self.commnode_list:
             save_list.append(commnode.serialize_node())
         with open(save_path,'wb') as f:
-             pickle.dump(save_list, f, -1)
+            pickle.dump(save_list, f, -1)
 
     def recover_commnodes(self, save_path):
         with open(save_path,'rb') as f:
