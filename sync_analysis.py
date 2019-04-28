@@ -67,13 +67,13 @@ if __name__ == '__main__':
     commnode_savepath = logpath_prefix + "-commnode.pkl"
     logrecord_savepath = logpath_prefix + "-logrecords.pkl"  
     stepinfos_savepath = logpath_prefix + "-stepinfos.pkl"
-    comm_node_mgr = CommNodeMgr()
-    comm_node_mgr.recover_commnodes(commnode_savepath)
-    log_record_mgr = LogRecordMgr()
-    log_record_mgr.recover_logrecords(logrecord_savepath) 
+    #comm_node_mgr = CommNodeMgr()
+    #comm_node_mgr.recover_commnodes(commnode_savepath)
+    #log_record_mgr = LogRecordMgr()
+    #log_record_mgr.recover_logrecords(logrecord_savepath) 
     stepinfo_mgr = StepInforMgr()
-    stepinfo_mgr.add_from_commnode_logrecord(comm_node_mgr, log_record_mgr)
-    stepinfo_mgr.show_steps()  
-    stepinfo_mgr.save_stepinfos(stepinfos_savepath)
+    #stepinfo_mgr.add_from_commnode_logrecord(comm_node_mgr, log_record_mgr)
+    stepinfo_mgr.recover_stepinfos(stepinfos_savepath)
+    stepinfo_mgr.show_steps() 
     #resp_order(comm_node_mgr, stepinfo_mgr)
     #JCT_vs_CCT(stepinfo_mgr)
