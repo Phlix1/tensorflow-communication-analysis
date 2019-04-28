@@ -57,10 +57,13 @@ def JCT_vs_CCT(stepinfo_mgr):
 if __name__ == '__main__':
     root_dir = sys.argv[1]
     model_name = sys.argv[2]
-    ps_num = sys.argv[3]
-    worker_num = sys.argv[4]
-    batchsize = sys.argv[5]
-    logpath_prefix = root_dir+"/"+model_name+"/"+model_name.lower()+"sync-"+ps_num+"_"+worker_num+"-"+batchsize
+    sync_stat = sys.argv[3]
+    ps_num = sys.argv[4]
+    worker_num = sys.argv[5]
+    batchsize = sys.argv[6]
+    if sync_stat != "sync":
+        sync_stat = ""
+    logpath_prefix = root_dir+"/"+model_name+"/"+model_name.lower()+sync_stat+"-"+ps_num+"_"+worker_num+"-"+batchsize
     commnode_savepath = logpath_prefix + "-commnode.pkl"
     logrecord_savepath = logpath_prefix + "-logrecords.pkl"  
     stepinfos_savepath = logpath_prefix + "-stepinfos.pkl"
