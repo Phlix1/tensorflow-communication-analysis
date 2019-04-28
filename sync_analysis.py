@@ -70,7 +70,7 @@ if __name__ == '__main__':
     log_record_mgr.recover_logrecords(logrecord_savepath) 
     stepinfo_mgr = StepInforMgr()
     stepinfo_mgr.add_from_commnode_logrecord(comm_node_mgr, log_record_mgr)
+    stepinfo_mgr.show_steps()  
     stepinfo_mgr.save_stepinfos(stepinfos_savepath)
-    #stepinfo_mgr.show_steps()  
     #resp_order(comm_node_mgr, stepinfo_mgr)
     #JCT_vs_CCT(stepinfo_mgr)
