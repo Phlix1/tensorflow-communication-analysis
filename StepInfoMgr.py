@@ -11,7 +11,7 @@ class StepInforMgr:
             stepids = []
             min_ts = -1.0
             for logrecord in log_record_mgr.runpart_log_records:
-                if logrecord.execution_count==str(execution_count):
+                if logrecord.execution_count==str(execution_count) and self.check_stepid(comm_node_mgr, logrecord.stepid):
                     stepids.append(logrecord.stepid)
                     if min_ts<0.0 or min_ts>timestr_to_timestamp(logrecord.timestr):
                         min_ts = timestr_to_timestamp(logrecord.timestr)
@@ -33,7 +33,13 @@ class StepInforMgr:
                                 max_comm_ts = timestr_to_timestamp(commnode.response_endtime[stepid])
             if max_comm_ts>0.0:
                 stepinfo.CCT = max_comm_ts - stepinfo.start_ts
-            
+    
+    def check_stepid(self, comm_node_mgr, stepid):
+        for commnode in comm_node_mgr.commnode_list:
+            if stepid in commnode.response_endtime.keys():
+                return True
+        return False
+
     def show_steps(self):
         for stepinfo in self.stepinfo_list:
             stepinfo.stepinfo_print()
